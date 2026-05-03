@@ -1,3 +1,6 @@
 spring:
   application:
     name: user_auth
+
+server:
+  port: 8082
