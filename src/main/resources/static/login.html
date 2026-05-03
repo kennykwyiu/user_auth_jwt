@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Log in — user_auth</title>
+	<link rel="stylesheet" href="/css/site.css" />
+</head>
+<body>
+	<div class="card wide">
+		<h1>Log in</h1>
+		<p class="sub">Posts your email and password to <code>/api/auth/login</code>. On success we confirm against the bcrypt hash stored at registration.</p>
+
+		<div id="msg" class="msg" aria-live="polite"></div>
+
+		<form id="login-form" novalidate>
+			<label for="email">Email</label>
+			<input id="email" name="email" type="email" autocomplete="username" required placeholder="you@example.com" />
+
+			<label for="password">Password</label>
+			<input id="password" name="password" type="password" autocomplete="current-password" required placeholder="••••••••" />
+
+			<button type="submit" id="btn">Sign in</button>
+		</form>
+
+		<a href="/register.html" class="link-muted">Need an account? Register →</a>
+		<a href="/" class="link-muted" style="display: block;">← Back to home</a>
+	</div>
+
+	<script>
+		const form = document.getElementById("login-form");
+		const msg = document.getElementById("msg");
+		const btn = document.getElementById("btn");
+
+		form.addEventListener("submit", async (e) => {
+			e.preventDefault();
+			msg.textContent = "";
+			msg.className = "msg";
+
+			const email = document.getElementById("email").value.trim();
+			const pw = document.getElementById("password").value;
+			if (!email || !pw) {
+				msg.textContent = "Please enter email and password.";
+				msg.className = "msg error";
+				return;
+			}
+
+			btn.disabled = true;
+			btn.textContent = "Checking…";
+
+			try {
+				const res = await fetch("/api/auth/login", {
+					method: "POST",
+					credentials: "include",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ email, password: pw }),
+				});
+
+				const text = await res.text();
+				let data;
+				try {
+					data = text ? JSON.parse(text) : null;
+				} catch {
+					data = null;
+				}
+
+				if (res.ok && data && data.email) {
+					msg.className = "msg success";
+					msg.textContent = `Welcome back, ${data.name || data.email}! Redirecting…`;
+					sessionStorage.setItem("loggedInPreview", JSON.stringify({ email: data.email, name: data.name, id: data.id }));
+					setTimeout(() => {
+						window.location.href = "/blog-demo.html?from=api-login";
+					}, 900);
+				} else if (res.status === 401) {
+					const detail =
+						(data && (data.message || data.detail || data.title)) ||
+						text ||
+						"Invalid email or password.";
+					msg.className = "msg error";
+					msg.textContent = detail;
+				} else {
+					const detail =
+						(data && (data.message || data.detail || data.title)) || text || res.statusText;
+					msg.className = "msg error";
+					msg.textContent = "Could not sign in: " + detail;
+				}
+			} catch {
+				msg.className = "msg error";
+				msg.textContent = "Network error — is the server running?";
+			} finally {
+				btn.disabled = false;
+				btn.textContent = "Sign in";
+			}
+		});
+	</script>
+</body>
+</html>

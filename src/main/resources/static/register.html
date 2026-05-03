@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Register — user_auth</title>
+	<link rel="stylesheet" href="/css/site.css" />
+</head>
+<body>
+	<div class="card">
+		<h1>Create account</h1>
+		<p class="sub">
+			Submit your email and password. After a successful signup you’ll see a confirmation page, then automatically land on the demo blog after five seconds.
+		</p>
+
+		<div id="message" class="msg" role="status" aria-live="polite"></div>
+
+		<form id="register-form" novalidate>
+			<label for="email">Email</label>
+			<input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com" />
+
+			<label for="password">Password</label>
+			<input id="password" name="password" type="password" autocomplete="new-password" required minlength="1" placeholder="••••••••" />
+
+			<button type="submit" id="submit">Register</button>
+		</form>
+
+		<a href="/" class="link-muted">← Back to home</a>
+	</div>
+
+	<script>
+		const STORAGE_KEY = "registrationResult";
+
+		const form = document.getElementById("register-form");
+		const message = document.getElementById("message");
+		const submit = document.getElementById("submit");
+
+		function setMessage(text, kind) {
+			message.textContent = text;
+			message.className = "msg" + (kind ? " " + kind : "");
+		}
+
+		form.addEventListener("submit", async (e) => {
+			e.preventDefault();
+			setMessage("");
+
+			const email = document.getElementById("email").value.trim();
+			const password = document.getElementById("password").value;
+
+			if (!email || !password) {
+				setMessage("Please enter email and password.", "error");
+				return;
+			}
+
+			submit.disabled = true;
+			try {
+				const res = await fetch("/api/auth/register", {
+					method: "POST",
+					credentials: "include",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ email, password }),
+				});
+
+				const text = await res.text();
+				let data;
+				try {
+					data = text ? JSON.parse(text) : null;
+				} catch {
+					data = null;
+				}
+
+				if (res.ok && data && data.id != null) {
+					sessionStorage.setItem(
+						STORAGE_KEY,
+						JSON.stringify({
+							id: data.id,
+							email: data.email,
+							name: data.name,
+							registeredAt: Date.now(),
+						})
+					);
+					window.location.href = "/registration-success.html";
+				} else if (res.status === 409) {
+					setMessage("That email is already registered.", "error");
+				} else {
+					const detail =
+						(data && (data.message || data.detail || data.title || data.error)) ||
+						text ||
+						res.statusText;
+					setMessage("Could not register: " + detail, "error");
+				}
+			} catch (err) {
+				setMessage("Network error — is the server running on this host?", "error");
+			} finally {
+				submit.disabled = false;
+			}
+		});
+	</script>
+</body>
+</html>

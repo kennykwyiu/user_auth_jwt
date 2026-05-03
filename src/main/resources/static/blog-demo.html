@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Demo blog — user_auth</title>
+	<link rel="stylesheet" href="/css/site.css" />
+</head>
+<body class="blog-wrap">
+	<div class="blog-inner">
+		<div class="blog-toolbar">
+			<a href="/">← Home</a>
+			<button type="button" class="btn-logout" id="logout-btn">Log out</button>
+		</div>
+
+		<div class="blog-header">
+			<h1 style="margin: 0;">Demo reading list</h1>
+			<p>
+				Block-style posts for UX testing only—titles and copy are placeholders. Return to <a href="/">home</a>
+				or <a href="/register.html">register another user</a>.
+			</p>
+			<p id="context-line" style="margin-top: 0.85rem; font-size: 0.88rem; color: var(--accent-hover); visibility: hidden;">
+			</p>
+		</div>
+
+		<section class="blog-grid" aria-label="Sample articles">
+			<article class="blog-post">
+				<div>
+					<p class="blog-post-meta">Feature · Demo content</p>
+					<h2 class="blog-post-title">Building habit loops with intentional friction</h2>
+					<p class="blog-post-snippet">
+						Start with friction you deliberately design: small confirmations, journaling prompts, shared accountability.
+						In product work, friction is neutral—it can block users or scaffold better decisions.
+						This block shows a wide introductory card spanning the grid.
+					</p>
+					<blockquote class="blog-blockquote">
+						Consistency beats motivation when the system survives a bad Tuesday.
+					</blockquote>
+					<span class="blog-tag">Editorial</span>
+				</div>
+				<div aria-hidden="true">
+					<p class="blog-post-snippet">
+						Use this column later for excerpts, thumbnails, metrics, “time to read,” or author cards.
+						Keeping two columns preserves a magazine-style silhouette while staying simple markup.
+					</p>
+					<span class="blog-tag">Layout</span>
+				</div>
+			</article>
+
+			<article class="blog-post">
+				<p class="blog-post-meta">Notes · Draft</p>
+				<h2 class="blog-post-title">API contracts before UI polish</h2>
+				<p class="blog-post-snippet">
+					Hash passwords on the edge of your domain layer, expose stable DTO shapes, centralize validation.
+					It’s tempting to tweak buttons first—but auth flows fail when payloads drift from the canonical model.
+				</p>
+				<span class="blog-tag">Engineering</span>
+			</article>
+
+			<article class="blog-post">
+				<p class="blog-post-meta">Practice · Outline</p>
+				<h2 class="blog-post-title">Smoke tests vs. scripted demos</h2>
+				<p class="blog-post-snippet">
+					Point Postman—or this static flow—against the happy path weekly. Freeze seed data scripts so regressions shout
+					instead of whispering behind HTML changes.
+				</p>
+				<span class="blog-tag">Quality</span>
+			</article>
+
+			<article class="blog-post">
+				<p class="blog-post-meta">Retro · Thoughts</p>
+				<h2 class="blog-post-title">Readers want context, then detail</h2>
+				<p class="blog-post-snippet">
+					Block sections let you scan for intent: meta line, headline, skim paragraph, quote, tag row.
+					Progressive enhancement still applies—readable without Tailwind-heavy trees.
+				</p>
+				<span class="blog-tag">Content</span>
+			</article>
+		</section>
+
+	</div>
+
+	<script>
+		document.getElementById("logout-btn").addEventListener("click", async () => {
+			try {
+				const res = await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+				sessionStorage.removeItem("loggedInPreview");
+				sessionStorage.removeItem("registrationResult");
+				if (!res.ok && res.status !== 204 && res.status !== 401 && res.status !== 403) {
+					window.alert("Could not log out (HTTP " + res.status + ").");
+				}
+			} catch {
+				sessionStorage.removeItem("loggedInPreview");
+				sessionStorage.removeItem("registrationResult");
+			} finally {
+				window.location.href = "/login.html";
+			}
+		});
+
+		const qs = new URLSearchParams(location.search);
+		const line = document.getElementById("context-line");
+		if (qs.get("welcome") === "1") {
+			line.textContent =
+				"Welcome after registration—you arrived from the countdown redirect.";
+			line.style.visibility = "visible";
+		} else if (qs.get("from") === "api-login") {
+			try {
+				const u = JSON.parse(sessionStorage.getItem("loggedInPreview") || "{}");
+				line.textContent =
+					u && u.email
+						? "Signed in as " + (u.email) + " (login endpoint returned 200)."
+						: "You reached the blog after a successful `/api/auth/login`.";
+				line.style.visibility = "visible";
+			} catch {
+				line.textContent = "You reached the blog after a successful `/api/auth/login`.";
+				line.style.visibility = "visible";
+			}
+		} else if (qs.get("from") === "demo-login") {
+			line.textContent = "Showing blog after an older demo-only shortcut.";
+			line.style.visibility = "visible";
+		}
+	</script>
+</body>
+</html>

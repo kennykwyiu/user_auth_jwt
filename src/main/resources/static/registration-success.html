@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>Registration success — user_auth</title>
+	<link rel="stylesheet" href="/css/site.css" />
+</head>
+<body>
+	<div class="card wide">
+		<div id="missing" hidden>
+			<h1>Nothing to show yet</h1>
+			<p class="sub">Start from <a href="/register.html">Register</a> to create an account.</p>
+			<a href="/" class="link-muted">← Home</a>
+		</div>
+
+		<div id="content" hidden>
+			<h1>You’re registered</h1>
+
+			<div class="success-banner" role="status">
+				<strong>You have successfully created a user.</strong>
+				Use the credentials below whenever real login becomes available on this demo.
+			</div>
+
+			<div class="login-name-box">
+				<div class="label">Your login name (email)</div>
+				<div class="value" id="login-email"></div>
+			</div>
+
+			<div class="login-name-box">
+				<div class="label">Display name</div>
+				<div class="value" id="display-name"></div>
+				<span class="blog-post-meta">User ID <span id="user-id"></span></span>
+			</div>
+
+			<p class="sub" style="margin-bottom: 0;">Next you’ll enter the demo blog area.</p>
+			<div class="countdown-wrap">
+				<span class="dot" aria-hidden="true"></span>
+				<span id="redirect-label">Opening the blog demo in </span><span id="countdown-num">5</span><span>s…</span>
+			</div>
+			<p class="skip-link"><a href="/blog-demo.html">Skip countdown and open blog →</a></p>
+			<a href="/" class="link-muted">← Home</a>
+		</div>
+	</div>
+
+	<script>
+		const STORAGE_KEY = "registrationResult";
+
+		const missingEl = document.getElementById("missing");
+		const contentEl = document.getElementById("content");
+
+		let raw = sessionStorage.getItem(STORAGE_KEY);
+
+		function showMissing() {
+			missingEl.hidden = false;
+		}
+
+		function showSuccess(data) {
+			contentEl.hidden = false;
+			document.getElementById("login-email").textContent = data.email || "(unknown)";
+			document.getElementById("display-name").textContent = data.name || "(no display name)";
+			document.getElementById("user-id").textContent = data.id ?? "—";
+
+			let left = 5;
+			const numEl = document.getElementById("countdown-num");
+			numEl.textContent = String(left);
+
+			const iv = setInterval(() => {
+				left -= 1;
+				numEl.textContent = String(Math.max(left, 0));
+				if (left <= 0) {
+					clearInterval(iv);
+					sessionStorage.removeItem(STORAGE_KEY);
+					window.location.replace("/blog-demo.html?welcome=1");
+				}
+			}, 1000);
+		}
+
+		if (!raw) {
+			showMissing();
+		} else {
+			try {
+				const data = JSON.parse(raw);
+				if (!data || !data.email) {
+					sessionStorage.removeItem(STORAGE_KEY);
+					showMissing();
+				} else {
+					showSuccess(data);
+				}
+			} catch {
+				sessionStorage.removeItem(STORAGE_KEY);
+				showMissing();
+			}
+		}
+	</script>
+</body>
+</html>
