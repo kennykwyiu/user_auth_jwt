@@ -29,5 +29,15 @@ public class AuthController {
 		this.sessionAuthSupport = sessionAuthSupport;
 	}
 
+	@PostMapping("/register")
+	public ResponseEntity<UserResponse> register(
+			@RequestBody RegisterRequest request,
+			HttpServletRequest httpRequest,
+			HttpServletResponse httpResponse) {
+		UserResponse body = userRegistrationService.register(request);
+		sessionAuthSupport.signIn(httpRequest, httpResponse, body);
+		return ResponseEntity.status(HttpStatus.CREATED).body(body);
+	}
+
 
 }
