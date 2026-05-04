@@ -39,5 +39,18 @@ public class AuthController {
 		return ResponseEntity.status(HttpStatus.CREATED).body(body);
 	}
 
+	/**
+	 * Login check: verifies email + password hash; returns {@link UserResponse} or 401, and opens a servlet session for the browser.
+	 */
+	@PostMapping("/login")
+	public ResponseEntity<UserResponse> login(
+			@RequestBody LoginRequest request,
+			HttpServletRequest httpRequest,
+			HttpServletResponse httpResponse) {
+		UserResponse body = loginService.login(request);
+		sessionAuthSupport.signIn(httpRequest, httpResponse, body);
+		return ResponseEntity.ok(body);
+	}
+
 
 }
