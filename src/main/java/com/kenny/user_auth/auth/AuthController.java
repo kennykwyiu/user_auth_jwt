@@ -52,5 +52,10 @@ public class AuthController {
 		return ResponseEntity.ok(body);
 	}
 
+	@PostMapping("/logout")
+	public ResponseEntity<Void> logout(HttpServletRequest httpRequest) {
+		sessionAuthSupport.signOut(httpRequest);
+		return ResponseEntity.noContent().build();
+	}
 
 }
