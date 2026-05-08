@@ -19,4 +19,10 @@ public class UserRegistrationService {
 		this.passwordEncoder = passwordEncoder;
 	}
 
+
+	private static String nameFromEmail(String email) {
+		int at = email.indexOf('@');
+		return at > 0 ? email.substring(0, at) : email;
+	}
+
 }
