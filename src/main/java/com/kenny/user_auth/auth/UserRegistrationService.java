@@ -19,6 +19,27 @@ public class UserRegistrationService {
 		this.passwordEncoder = passwordEncoder;
 	}
 
+	public UserResponse register(RegisterRequest request) {
+		if (request == null || request.email() == null || request.password() == null) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email and password are required");
+		}
+		String email = request.email().trim().toLowerCase();
+		String rawPassword = request.password();
+		if (email.isBlank() || rawPassword.isBlank()) {
+			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email and password are required");
+		}
+		if (userRepository.existsByEmail(email)) {
+			throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already registered");
+		}
+
+		User user = new User();
+		user.setEmail(email);
+		user.setPassword(passwordEncoder.encode(rawPassword));
+		user.setName(nameFromEmail(email));
+
+		User saved = userRepository.save(user);
+		return new UserResponse(saved.getId(), saved.getEmail(), saved.getName());
+	}
 
 	private static String nameFromEmail(String email) {
 		int at = email.indexOf('@');
